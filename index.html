@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Lab</title>
+
+    <!-- Include CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+
+    <!-- Include CodeMirror JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+
+    <!-- Include Pyodide -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+        }
+
+        #codeEditor {
+            display: none;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-rows: auto 200px;
+            height: 100vh;
+        }
+
+        .codeRunBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: green;
+            border: none;
+            outline: none;
+            border-radius: 10px;
+            padding: 5px 15px;
+            display: flex;
+            color: white;
+            cursor: pointer;
+        }
+
+        .CodeMirror-wrap {
+            height: calc(100vh - 200px);
+        }
+
+        .codeRunBtn img {
+            filter: invert(1);
+            margin-left: 3px;
+        }
+
+        #terminal {
+            background-color: black;
+            border: none;
+            outline: none;
+            resize: none;
+            color: white;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-grid">
+        <!-- Code Editor Textarea -->
+        <textarea placeholder="Get set code!!!" name="" id="codeEditor">
+# Online Python Compiler.
+# Code, Compile, Run and Debug python program online.
+# Write your code in this editor and press "Run" button to execute it.
+
+print("Hello World")
+</textarea>
+
+        <!-- Terminal Output Textarea -->
+        <textarea id="terminal" readonly></textarea>
+    </div>
+    <button class="codeRunBtn" id="runButton">
+        Run <img src="https://www.svgrepo.com/show/529141/play.svg" height="15px" alt="">
+    </button>
+
+    <script>
+        // Initialize CodeMirror editor
+        const editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+            lineNumbers: true,
+            mode: 'python', // You can set this to any programming language mode
+            theme: 'dracula', // Choose a theme, like 'material', 'dracula', etc.
+            lineWrapping: true, // Optional: wraps long lines
+        });
+
+        // Load Pyodide and initialize
+        async function loadPyodideAndPackages() {
+            window.pyodide = await loadPyodide();
+        }
+
+        loadPyodideAndPackages(); // Initialize Pyodide
+
+        // Run Python code and display output
+        document.getElementById('runButton').addEventListener('click', async () => {
+            const code = editor.getValue(); // Get code from CodeMirror
+            const terminal = document.getElementById('terminal');
+            terminal.value = 'Running...\n'; // Show a running message
+            try {
+                let output = await pyodide.runPythonAsync(code); // Run Python code
+                terminal.value += output + '\n'; // Display the output
+            } catch (err) {
+                terminal.value += 'Error: ' + err.message + '\n'; // Display errors
+            }
+        });
+    </script>
+</body>
+
+</html>
