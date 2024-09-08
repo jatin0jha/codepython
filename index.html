@@ -1,28 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Python Code Runner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Lab with IntelliSense and Auto-Close</title>
+
+    <!-- Include CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+
+    <!-- Include CodeMirror hint CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
+
+    <!-- Include CodeMirror JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/python-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+
+    <!-- Include Pyodide -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+        }
+
+        #codeEditor {
+            display: none;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-rows: auto 200px;
+            height: 100vh;
+        }
+
+        .codeRunBtn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background-color: green;
+            border: none;
+            outline: none;
+            border-radius: 10px;
+            padding: 5px 15px;
+            display: flex;
+            color: white;
+            cursor: pointer;
+        }
+
+        .CodeMirror-wrap {
+            height: calc(100vh - 200px);
+        }
+
+        .codeRunBtn img {
+            filter: invert(1);
+            margin-left: 3px;
+        }
+
+        #terminal {
+            background-color: #272A36;
+            border: none;
+            outline: none;
+            resize: none;
+            color: white;
+            padding: 10px;
+            border-top: 1px solid #565b6f;
+        }
+
+        /* width */
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+  background: #444444;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+    </style>
 </head>
+
 <body>
-    <h1>Python Code Runner</h1>
-    <textarea id="codeEditor" rows="10" cols="50">print("Hello, World!")</textarea>
-    <button onclick="runCode()">Run Code</button>
-    <pre id="output"></pre>
+    <div class="main-grid">
+        <!-- Code Editor Textarea -->
+        <textarea placeholder="Get set code!!!" name="" id="codeEditor">
+# Online Python Compiler.
+# Code, Compile, Run and Debug python program online.
+# Write your code in this editor and press "Run" button to execute it.
+
+print("Hello World!")
+</textarea>
+
+        <!-- Terminal Output Textarea -->
+        <textarea id="terminal" readonly></textarea>
+    </div>
+    <button class="codeRunBtn" id="runButton">
+        Run <img src="https://www.svgrepo.com/show/529141/play.svg" height="15px" alt="">
+    </button>
 
     <script>
-        async function runCode() {
-            const code = document.getElementById('codeEditor').value;
-            const response = await fetch('/api/run', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ code })
-            });
-            const result = await response.json();
-            document.getElementById('output').textContent = result.output || result.error;
+        // Initialize CodeMirror editor with hinting and auto-close brackets enabled
+        const editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+            lineNumbers: true,
+            mode: 'python', // Set mode to Python
+            theme: 'dracula', // Choose a theme
+            lineWrapping: true, // Optional: wraps long lines
+            extraKeys: {
+                'Ctrl-Space': 'autocomplete' // Optional: Trigger autocomplete manually
+            },
+            autoCloseBrackets: true // Enable auto-closing brackets
+        });
+    
+        // Load Pyodide and initialize
+        async function loadPyodideAndPackages() {
+            window.pyodide = await loadPyodide();
         }
+    
+        loadPyodideAndPackages(); // Initialize Pyodide
+    
+        // Create a function to handle Python's input() calls
+        function customInput(promptText) {
+            return prompt(promptText); // Use JavaScript's prompt() to get user input
+        }
+    
+        // Run Python code and display output
+        document.getElementById('runButton').addEventListener('click', async () => {
+            const code = editor.getValue(); // Get code from CodeMirror
+            const terminal = document.getElementById('terminal');
+            terminal.value = 'Running...\n'; // Show a running message
+    
+            // Create a function in Python that calls the JavaScript customInput function
+            pyodide.runPython(`
+                import sys
+                from io import StringIO
+                sys.stdout = StringIO()
+    
+                # Override the built-in input function
+                def input(prompt=''):
+                    from js import customInput  # Import the customInput function from JavaScript
+                    return customInput(prompt)
+            `);
+    
+            try {
+                // Run the Python code
+                await pyodide.runPythonAsync(code);
+    
+                // Fetch the output from stdout
+                const output = pyodide.runPython('sys.stdout.getvalue()');
+    
+                // Display the output
+                terminal.value += output + '\n';
+            } catch (err) {
+                // Display errors
+                terminal.value += 'Error: ' + err.message + '\n';
+            }
+        });
+    
+        // Show hints automatically as the user types
+        editor.on('inputRead', function (cm) {
+            // Show hints automatically
+            cm.showHint({ hint: CodeMirror.pythonHint });
+        });
     </script>
+    
+
 </body>
+
 </html>
