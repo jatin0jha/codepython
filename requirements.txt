@@ -1,2 +1,1 @@
-pyodide==0.23.4
 CodeMirror==5.65.13
