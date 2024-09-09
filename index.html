@@ -5,14 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ded Python</title>
-
+    <link rel="shortcut icon" href="https://www.svgrepo.com/show/271907/cool.svg" type="image/x-icon">
     <!-- Include CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
-
     <!-- Include CodeMirror hint CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
-
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
     <!-- Include CodeMirror JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
@@ -27,7 +26,16 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: black;
+            background-color: #18191c;
+        }
+
+        .cm-s-dracula,
+        .cm-s-dracula.CodeMirror {
+            background-color: #18191c !important;
+        }
+
+        .CodeMirror-gutter{
+            background-color: #1c1e21;
         }
 
         #codeEditor {
@@ -64,35 +72,37 @@
         }
 
         #terminal {
-            background-color: #272A36;
+            background-color: #1c1e21;
             border: none;
             outline: none;
             resize: none;
             color: white;
             padding: 10px;
-            border-top: 1px solid #565b6f;
+            margin: 5px;
+            border-radius: 20px;
         }
 
         /* width */
-::-webkit-scrollbar {
-  width: 3px;
-}
+        ::-webkit-scrollbar {
+            width: 3px;
+            height: 3px;
+        }
 
-/* Track */
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+        /* Track */
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
 
-/* Handle */
-::-webkit-scrollbar-thumb {
-    border-radius: 10px;
-  background: #444444;
-}
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            border-radius: 10px;
+            background: #444444;
+        }
 
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
     </style>
 </head>
 
@@ -126,25 +136,25 @@ print("Hello World!")
             },
             autoCloseBrackets: true // Enable auto-closing brackets
         });
-    
+
         // Load Pyodide and initialize
         async function loadPyodideAndPackages() {
             window.pyodide = await loadPyodide();
         }
-    
+
         loadPyodideAndPackages(); // Initialize Pyodide
-    
+
         // Create a function to handle Python's input() calls
         function customInput(promptText) {
             return prompt(promptText); // Use JavaScript's prompt() to get user input
         }
-    
+
         // Run Python code and display output
         document.getElementById('runButton').addEventListener('click', async () => {
             const code = editor.getValue(); // Get code from CodeMirror
             const terminal = document.getElementById('terminal');
             terminal.value = 'Running...\n'; // Show a running message
-    
+
             // Create a function in Python that calls the JavaScript customInput function
             pyodide.runPython(`
                 import sys
@@ -156,14 +166,14 @@ print("Hello World!")
                     from js import customInput  # Import the customInput function from JavaScript
                     return customInput(prompt)
             `);
-    
+
             try {
                 // Run the Python code
                 await pyodide.runPythonAsync(code);
-    
+
                 // Fetch the output from stdout
                 const output = pyodide.runPython('sys.stdout.getvalue()');
-    
+
                 // Display the output
                 terminal.value += output + '\n';
             } catch (err) {
@@ -171,14 +181,14 @@ print("Hello World!")
                 terminal.value += 'Error: ' + err.message + '\n';
             }
         });
-    
+
         // Show hints automatically as the user types
         editor.on('inputRead', function (cm) {
             // Show hints automatically
             cm.showHint({ hint: CodeMirror.pythonHint });
         });
     </script>
-    
+
 
 </body>
 
