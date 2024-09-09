@@ -16,11 +16,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/python-hint.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
 
     <!-- Include Pyodide -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+
 
     <style>
         body {
@@ -30,12 +30,9 @@
         }
 
         .cm-s-dracula,
+        .CodeMirror-gutter,
         .cm-s-dracula.CodeMirror {
             background-color: #18191c !important;
-        }
-
-        .CodeMirror-gutter{
-            background-color: #1c1e21;
         }
 
         #codeEditor {
@@ -45,13 +42,10 @@
         .main-grid {
             display: grid;
             grid-template-rows: auto 200px;
-            height: 100vh;
+            height: calc(100vh - 41px);
         }
 
         .codeRunBtn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
             background-color: green;
             border: none;
             outline: none;
@@ -63,7 +57,7 @@
         }
 
         .CodeMirror-wrap {
-            height: calc(100vh - 200px);
+            height: calc(100vh - 241px);
         }
 
         .codeRunBtn img {
@@ -78,35 +72,68 @@
             resize: none;
             color: white;
             padding: 10px;
-            margin: 5px;
-            border-radius: 20px;
+            border-radius: 20px 20px 0 0;
         }
 
-        /* width */
         ::-webkit-scrollbar {
             width: 3px;
             height: 3px;
         }
 
-        /* Track */
         ::-webkit-scrollbar-track {
             background: transparent;
         }
 
-        /* Handle */
         ::-webkit-scrollbar-thumb {
             border-radius: 10px;
             background: #444444;
         }
 
-        /* Handle on hover */
         ::-webkit-scrollbar-thumb:hover {
             background: #555;
+        }
+
+        nav {
+            padding: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgb(65, 65, 65);
+            height: 30px;
+        }
+
+        nav div {
+            display: flex;
+            align-items: center;
+        }
+
+        #profile-pic {
+            height: 25px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            margin-right: 5px;
+            background-color: white;
+        }
+
+        #usr-name {
+            color: white;
+            font-family: monospace;
+
         }
     </style>
 </head>
 
 <body>
+    <nav>
+        <div><img src="https://www.svgrepo.com/show/527961/user.svg" id="profile-pic" alt="pfp">
+            <p id="usr-name">User</p>
+        </div>
+        <div>
+            <button class="codeRunBtn" id="runButton">
+                Run <img src="https://www.svgrepo.com/show/529141/play.svg" height="15px" alt="">
+            </button>
+        </div>
+    </nav>
     <div class="main-grid">
         <!-- Code Editor Textarea -->
         <textarea placeholder="Get set code!!!" name="" id="codeEditor">
@@ -116,13 +143,9 @@
 
 print("Hello World!")
 </textarea>
-
         <!-- Terminal Output Textarea -->
         <textarea id="terminal" readonly></textarea>
     </div>
-    <button class="codeRunBtn" id="runButton">
-        Run <img src="https://www.svgrepo.com/show/529141/play.svg" height="15px" alt="">
-    </button>
 
     <script>
         // Initialize CodeMirror editor with hinting and auto-close brackets enabled
@@ -136,6 +159,26 @@ print("Hello World!")
             },
             autoCloseBrackets: true // Enable auto-closing brackets
         });
+
+        // Function to save code to local storage
+        function saveCodeToLocalStorage() {
+            const code = editor.getValue();
+            localStorage.setItem('savedCode', code);
+        }
+
+        // Function to load code from local storage
+        function loadCodeFromLocalStorage() {
+            const savedCode = localStorage.getItem('savedCode');
+            if (savedCode) {
+                editor.setValue(savedCode);
+            }
+        }
+
+        // Call the function to load code when the page loads
+        loadCodeFromLocalStorage();
+
+        // Save code to local storage whenever the user makes changes in the editor
+        editor.on('change', saveCodeToLocalStorage);
 
         // Load Pyodide and initialize
         async function loadPyodideAndPackages() {
@@ -166,7 +209,6 @@ print("Hello World!")
                     from js import customInput  # Import the customInput function from JavaScript
                     return customInput(prompt)
             `);
-
             try {
                 // Run the Python code
                 await pyodide.runPythonAsync(code);
@@ -188,7 +230,6 @@ print("Hello World!")
             cm.showHint({ hint: CodeMirror.pythonHint });
         });
     </script>
-
 
 </body>
 
