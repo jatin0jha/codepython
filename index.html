@@ -27,6 +27,7 @@
             margin: 0;
             padding: 0;
             background-color: #18191c;
+            font-family: monospace;
         }
 
         .cm-s-dracula,
@@ -56,13 +57,30 @@
             cursor: pointer;
         }
 
+        .codeDwnloadBtn {
+            aspect-ratio: 1;
+            margin: 0 5px;
+            border: 1px solid rgb(47, 47, 47);
+            outline: none;
+            border-radius: 10px;
+            background-color: rgb(47, 47, 47);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .codeDwnloadBtn:hover {
+            box-shadow: 0px 0px 10px purple;
+            border: 1px solid rgb(68, 0, 68);
+        }
+
         .CodeMirror-wrap {
             height: calc(100vh - 241px);
         }
 
-        .codeRunBtn img {
+        button img {
             filter: invert(1);
-            margin-left: 3px;
         }
 
         #terminal {
@@ -72,12 +90,12 @@
             resize: none;
             color: white;
             padding: 10px;
-            border-radius: 20px 20px 0 0;
+            border-top: 1px solid #444444;
         }
 
         ::-webkit-scrollbar {
             width: 3px;
-            height: 3px;
+            height: 0px;
         }
 
         ::-webkit-scrollbar-track {
@@ -100,6 +118,7 @@
             align-items: center;
             border-bottom: 1px solid rgb(65, 65, 65);
             height: 30px;
+            width: calc(100%-50px);
         }
 
         nav div {
@@ -107,47 +126,113 @@
             align-items: center;
         }
 
-        #profile-pic {
-            height: 25px;
+        .files {
             aspect-ratio: 1;
-            border-radius: 50%;
-            margin-right: 5px;
-            background-color: white;
+            margin: 0 5px;
+            border: none;
+            outline: none;
+            border-radius: 10px;
+            background-color: transparent;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
         }
 
-        #usr-name {
-            color: white;
-            font-family: monospace;
+        .files:hover {
+            background-color: rgb(47, 47, 47);
+        }
 
+        .addBtn {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        .fileTab {
+            min-width: 150px;
+            color: white;
+            background-color: rgb(38, 38, 38);
+            padding: 5px 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0 2px;
+            cursor: pointer;
+        }
+
+        .fileTab img {
+            filter: invert(1);
+        }
+
+        /* .file-sys-grid {
+            display: grid;
+            grid-template-columns: 200px auto;
+        } */
+
+        .sideBar {
+            background-color: #1c1e21;
+        }
+
+        .sideBarNav {
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 2px 5px;
         }
     </style>
 </head>
 
 <body>
     <nav>
-        <div><img src="https://www.svgrepo.com/show/527961/user.svg" id="profile-pic" alt="pfp">
-            <p id="usr-name">User</p>
+        <div style="max-width: calc(100% - 110px); display: flex; align-items: center;">
+            <button class="files">
+                <img src="https://www.svgrepo.com/show/504324/files.svg" height="15px" alt="">
+            </button>
+            <div style="overflow-x: scroll; max-width: 100%; display: flex;" id="fileTabsContainer">
+                <!-- File tabs will be added dynamically here -->
+            </div><img class="addBtn" src="https://www.svgrepo.com/show/510136/plus.svg" height="20px" alt=""
+            onclick="addNewFile()">
         </div>
         <div>
+            <button class="codeDwnloadBtn" id="downloadButton">
+                <img src="https://www.svgrepo.com/show/533682/download.svg" height="15px" alt="">
+            </button>
             <button class="codeRunBtn" id="runButton">
                 Run <img src="https://www.svgrepo.com/show/529141/play.svg" height="15px" alt="">
             </button>
         </div>
     </nav>
     <div class="main-grid">
-        <!-- Code Editor Textarea -->
-        <textarea placeholder="Get set code!!!" name="" id="codeEditor">
+        <div class="file-sys-grid">
+            <!-- <div class="sideBar">
+                <div class="sideBarNav">
+                    Files
+                    <img class="addBtn" src="https://www.svgrepo.com/show/510136/plus.svg" height="20px" alt=""
+                        onclick="addNewFile()">
+                </div>
+                <div style="overflow-x: scroll; max-width: 100%; display: flex;" id="fileTabsContainer">
+                </div>
+            </div> -->
+            <!-- Code Editor Textarea -->
+            <textarea placeholder="Get set code!!!" name="" id="codeEditor">
 # Online Python Compiler.
 # Code, Compile, Run and Debug python program online.
 # Write your code in this editor and press "Run" button to execute it.
 
 print("Hello World!")
 </textarea>
+
+        </div>
         <!-- Terminal Output Textarea -->
         <textarea id="terminal" readonly></textarea>
     </div>
 
     <script>
+        let files = {}; // Initialize an empty files object
+        let currentFile = 'main.py';
+
         // Initialize CodeMirror editor with hinting and auto-close brackets enabled
         const editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
             lineNumbers: true,
@@ -160,18 +245,84 @@ print("Hello World!")
             autoCloseBrackets: true // Enable auto-closing brackets
         });
 
+        function switchFile(fileName) {
+            // Save the current file content
+            files[currentFile] = editor.getValue();
+            currentFile = fileName;
+            editor.setValue(files[currentFile]); // Load the new file content
+        }
+
+        function addNewFile() {
+            const fileName = prompt('Enter new file name (e.g., script.py):');
+            if (!fileName || files[fileName]) {
+                alert('Invalid file name or file already exists!');
+                return;
+            }
+            files[fileName] = ''; // Initialize empty content
+            currentFile = fileName; // Set as current file
+            createFileTab(fileName); // Create a new tab for the file
+            editor.setValue(''); // Clear the editor for new file
+        }
+
+        function createFileTab(fileName) {
+            const fileTab = document.createElement('div');
+            fileTab.className = 'fileTab';
+            fileTab.innerHTML = `${fileName} <img class="filetabimg" src="https://www.svgrepo.com/show/505619/cross.svg" height="15px" alt="" onclick="closeFile(event, '${fileName}')">`;
+            fileTab.onclick = () => switchFile(fileName);
+            document.getElementById('fileTabsContainer').appendChild(fileTab);
+        }
+
+        function closeFile(event, fileName) {
+            event.stopPropagation();
+            if (confirm(`Are you sure you want to close ${fileName}? Unsaved changes will be lost.`)) {
+                delete files[fileName];
+                if (currentFile === fileName) {
+                    currentFile = Object.keys(files)[0]; // Switch to the first available file
+                    editor.setValue(files[currentFile] || ''); // Load content of the first file
+                }
+                event.target.parentElement.remove(); // Remove the tab
+            }
+        }
+
+        // Function to download code from the editor as a .py file
+        function downloadCode() {
+            const code = editor.getValue(); // Get the code from the CodeMirror editor
+            const blob = new Blob([code], { type: 'text/plain' }); // Create a Blob from the code
+            const url = URL.createObjectURL(blob); // Create a URL for the Blob
+
+            const a = document.createElement('a'); // Create an anchor element
+            a.href = url;
+            a.download = currentFile; // Set the download file name to the current file
+            a.click(); // Programmatically click the anchor to trigger the download
+
+            URL.revokeObjectURL(url); // Revoke the URL after the download is complete
+        }
+
+        // Attach event listener to the download button
+        document.getElementById('downloadButton').addEventListener('click', downloadCode);
+
         // Function to save code to local storage
         function saveCodeToLocalStorage() {
-            const code = editor.getValue();
-            localStorage.setItem('savedCode', code);
+            files[currentFile] = editor.getValue();
+            localStorage.setItem('files', JSON.stringify(files));
         }
 
         // Function to load code from local storage
         function loadCodeFromLocalStorage() {
-            const savedCode = localStorage.getItem('savedCode');
-            if (savedCode) {
-                editor.setValue(savedCode);
+            const savedFiles = localStorage.getItem('files');
+            if (savedFiles) {
+                files = JSON.parse(savedFiles);
             }
+
+            // If no 'main.py' in saved files, create a default one
+            if (!files['main.py']) {
+                files['main.py'] = '# Online Python Compiler.\n# Code, Compile, Run and Debug python program online.\n# Write your code in this editor and press "Run" button to execute it.\n\nprint("Hello World!")';
+            }
+
+            for (const fileName in files) {
+                createFileTab(fileName); // Create file tabs for each loaded file
+            }
+            switchFile(Object.keys(files)[0]); // Switch to the first file
         }
 
         // Call the function to load code when the page loads
